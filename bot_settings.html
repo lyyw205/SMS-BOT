@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>SMS Bot · 설정 (bot_settings)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f5f7;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px 16px 20px;
+      box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+      margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+      gap: 10px 16px;
+      align-items: flex-start;
+    }
+    label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #374151;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      outline: none;
+      background: #f9fafb;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    input[type="text"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #6366f1;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(99,102,241,0.2);
+    }
+    .form-row-span {
+      grid-column: 1 / -1;
+    }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.05s ease, box-shadow 0.1s ease, background 0.1s ease;
+    }
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(79,70,229,0.3);
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: #fff;
+    }
+    .status {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #6b7280;
+      background: #f3f4f6;
+    }
+    tbody tr:hover {
+      background: #f9fafb;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      background: #e5e7eb;
+      color: #374151;
+      gap: 4px;
+    }
+    .pill-key {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    .table-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 640px) {
+      th:nth-child(1), td:nth-child(1) { width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>봇 설정 관리 (bot_settings)</h1>
+    <p class="subtitle">
+      야간 자동응답 멘트, 클레임 기본 멘트 등 공통 텍스트 설정을 관리합니다.
+      서버는 이 테이블을 읽어서 자동응답에 사용하는 구조로 만들면 돼요.
+    </p>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Supabase 설정</div>
+        <span class="badge">bot_settings 사용</span>
+      </div>
+      <div style="font-size:0.8rem;color:#4b5563;line-height:1.4;">
+        아래 상수 <span class="mono">SUPABASE_URL</span> / <span class="mono">SUPABASE_ANON_KEY</span> 를
+        네 프로젝트 값으로 교체한 뒤 사용하세요.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">설정 추가 / 수정</div>
+        <span id="edit-mode-pill" class="pill" style="display:none;">편집 모드</span>
+      </div>
+
+      <form id="settings-form">
+        <div>
+          <label for="key">Key (고유 키)</label>
+          <select id="key-template">
+            <option value="">자주 쓰는 키 선택 (선택 시 아래 입력칸에 채워짐)</option>
+            <option value="night_defer_reply">night_defer_reply (야간 접수 멘트)</option>
+            <option value="complaint_reply">complaint_reply (클레임 기본 멘트)</option>
+          </select>
+          <input type="text" id="key" placeholder="예: night_defer_reply" class="mono" />
+        </div>
+        <div class="form-row-span">
+          <label for="value">Value (텍스트, 멘트 내용)</label>
+          <textarea id="value" placeholder="여기에 실제 문자로 나갈 멘트를 입력하세요."></textarea>
+        </div>
+        <div class="form-actions form-row-span">
+          <button type="submit" class="btn-primary" id="submit-btn">+ 설정 저장</button>
+          <button type="button" class="btn-secondary" id="cancel-edit-btn" style="display:none;">취소</button>
+          <div class="status" id="form-status"></div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">설정 목록</div>
+        <button type="button" class="btn-secondary" id="reload-btn">새로고침</button>
+      </div>
+      <div class="status" id="list-status">로딩 중...</div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Value</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody id="settings-tbody">
+            <!-- rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // TODO: 여기를 네 Supabase 프로젝트 값으로 교체
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const tbody = document.getElementById("settings-tbody");
+    const listStatusEl = document.getElementById("list-status");
+    const formStatusEl = document.getElementById("form-status");
+    const formEl = document.getElementById("settings-form");
+    const reloadBtn = document.getElementById("reload-btn");
+    const submitBtn = document.getElementById("submit-btn");
+    const cancelEditBtn = document.getElementById("cancel-edit-btn");
+    const editModePill = document.getElementById("edit-mode-pill");
+
+    const keyInput = document.getElementById("key");
+    const keyTemplateSelect = document.getElementById("key-template");
+    const valueInput = document.getElementById("value");
+
+    let editingKey = null;
+
+    function setFormStatus(msg, isError = false) {
+      formStatusEl.textContent = msg || "";
+      formStatusEl.style.color = isError ? "#b91c1c" : "#6b7280";
+    }
+    function setListStatus(msg, isError = false) {
+      listStatusEl.textContent = msg || "";
+      listStatusEl.style.color = isError ? "#b91c1c" : "#6b7280";
+    }
+
+    keyTemplateSelect.addEventListener("change", () => {
+      if (keyTemplateSelect.value) {
+        keyInput.value = keyTemplateSelect.value;
+      }
+    });
+
+    function enterEditMode(row) {
+      editingKey = row.key;
+      keyInput.value = row.key;
+      valueInput.value = row.value;
+
+      submitBtn.textContent = "✓ 설정 수정 저장";
+      cancelEditBtn.style.display = "inline-flex";
+      editModePill.style.display = "inline-flex";
+      setFormStatus("편집 모드: 저장하면 해당 설정 값이 수정됩니다.");
+    }
+
+    function resetForm() {
+      editingKey = null;
+      formEl.reset();
+      submitBtn.textContent = "+ 설정 저장";
+      cancelEditBtn.style.display = "none";
+      editModePill.style.display = "none";
+      setFormStatus("");
+    }
+
+    async function loadSettings() {
+      setListStatus("로딩 중...");
+      tbody.innerHTML = "";
+
+      const { data, error } = await supabase
+        .from("bot_settings")
+        .select("*")
+        .order("key", { ascending: true });
+
+      if (error) {
+        console.error("loadSettings error:", error);
+        setListStatus("목록을 불러오지 못했습니다.", true);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setListStatus("등록된 설정이 없습니다. 위 폼에서 추가하세요.");
+        return;
+      }
+
+      setListStatus(`총 ${data.length}개 설정`);
+
+      data.forEach((row) => {
+        const tr = document.createElement("tr");
+
+        const tdKey = document.createElement("td");
+        tdKey.innerHTML = `<span class="pill pill-key mono">${row.key}</span>`;
+
+        const tdValue = document.createElement("td");
+        tdValue.textContent = (row.value || "").length > 90
+          ? row.value.slice(0, 90) + "..."
+          : row.value || "";
+
+        const tdActions = document.createElement("td");
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "table-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "btn-secondary";
+        editBtn.textContent = "수정";
+        editBtn.onclick = () => enterEditMode(row);
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn-danger";
+        delBtn.textContent = "삭제";
+        delBtn.onclick = async () => {
+          const ok = window.confirm(
+            `정말 삭제할까요?\n\nkey: ${row.key}`
+          );
+          if (!ok) return;
+          const { error: delError } = await supabase
+            .from("bot_settings")
+            .delete()
+            .eq("key", row.key);
+          if (delError) {
+            console.error("delete setting error:", delError);
+            alert("삭제 중 오류가 발생했습니다.");
+            return;
+          }
+          if (editingKey === row.key) {
+            resetForm();
+          }
+          await loadSettings();
+        };
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(delBtn);
+        tdActions.appendChild(actionsDiv);
+
+        tr.appendChild(tdKey);
+        tr.appendChild(tdValue);
+        tr.appendChild(tdActions);
+        tbody.appendChild(tr);
+      });
+    }
+
+    formEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setFormStatus("");
+
+      const key = keyInput.value.trim();
+      const value = valueInput.value.trim();
+
+      if (!key) {
+        setFormStatus("key는 필수입니다.", true);
+        return;
+      }
+      if (!value) {
+        setFormStatus("value는 비워둘 수 없습니다.", true);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = editingKey ? "저장 중..." : "추가 중...";
+
+      try {
+        if (editingKey) {
+          const { error } = await supabase
+            .from("bot_settings")
+            .update({
+              key,
+              value,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("key", editingKey);
+
+          if (error) {
+            console.error("update setting error:", error);
+            setFormStatus("수정 중 오류가 발생했습니다.", true);
+          } else {
+            setFormStatus("수정 완료!");
+            resetForm();
+            await loadSettings();
+          }
+        } else {
+          const { error } = await supabase
+            .from("bot_settings")
+            .insert({ key, value });
+
+          if (error) {
+            console.error("insert setting error:", error);
+            setFormStatus("추가 중 오류가 발생했습니다. key가 중복되지 않는지 확인하세요.", true);
+          } else {
+            setFormStatus("추가 완료!");
+            formEl.reset();
+            await loadSettings();
+          }
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = editingKey ? "✓ 설정 수정 저장" : "+ 설정 저장";
+      }
+    });
+
+    cancelEditBtn.addEventListener("click", () => {
+      resetForm();
+    });
+
+    reloadBtn.addEventListener("click", () => {
+      loadSettings();
+    });
+
+    // 초기 로딩
+    loadSettings();
+  </script>
+</body>
+</html>

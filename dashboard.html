@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>SMS Bot · Intents 관리</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f5f7;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 64px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px 16px 20px;
+      box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+      margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
+      gap: 10px 16px;
+      align-items: flex-start;
+    }
+    label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #374151;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input[type="text"],
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      outline: none;
+      background: #f9fafb;
+    }
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: #6366f1;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(99,102,241,0.2);
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 22px;
+      font-size: 0.8rem;
+    }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.05s ease, box-shadow 0.1s ease, background 0.1s ease;
+    }
+    button:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(79,70,229,0.3);
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: #fff;
+    }
+    .status {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #6b7280;
+      background: #f3f4f6;
+    }
+    tbody tr:hover {
+      background: #f9fafb;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      background: #e5e7eb;
+      color: #374151;
+      gap: 4px;
+    }
+    .pill-green {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .pill-amber {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .pill-red {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.8rem;
+    }
+    .table-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 640px) {
+      th:nth-child(1), td:nth-child(1) { width: 60px; }
+      th:nth-child(2), td:nth-child(2) { width: 120px; }
+      th:nth-child(4), td:nth-child(4) { width: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Intents 관리</h1>
+    <p class="subtitle">
+      게스트하우스 문자 자동응답에서 사용할 인텐트 목록을 관리합니다.
+      <br/>이 페이지에서 추가·수정한 값은 LLM 분류 프롬프트와 서버 로직에 그대로 반영될 수 있어요.
+    </p>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Supabase 설정</div>
+        <span class="badge">클라이언트 측 anon 키 사용</span>
+      </div>
+      <div style="font-size:0.8rem;color:#4b5563;line-height:1.4;">
+        아래 상수 <span class="mono">SUPABASE_URL</span> / <span class="mono">SUPABASE_ANON_KEY</span> 를
+        네 프로젝트 값으로 교체한 뒤 사용하세요.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Intent 추가 / 수정</div>
+        <span id="edit-mode-pill" class="pill" style="display:none;">편집 모드</span>
+      </div>
+      <form id="intent-form">
+        <div>
+          <label for="name">이름 (영문, 고유)</label>
+          <input type="text" id="name" placeholder="예: CHECKIN_TIME" required />
+        </div>
+        <div>
+          <label for="description">설명 (한국어)</label>
+          <textarea id="description" placeholder="예: 체크인/체크아웃 시간에 대한 문의"></textarea>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="is_action" />
+          <label for="is_action" style="margin:0;">야간에 처리 보류 대상 (예약/취소/변경 등)</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="is_complaint_like" />
+          <label for="is_complaint_like" style="margin:0;">기본적으로 민감/클레임 성격 (환불 등)</label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="submit-btn">
+            + 인텐트 저장
+          </button>
+          <button type="button" class="btn-secondary" id="cancel-edit-btn" style="display:none;">
+            취소
+          </button>
+          <div class="status" id="form-status"></div>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Intents 목록</div>
+        <button type="button" class="btn-secondary" id="reload-btn">새로고침</button>
+      </div>
+      <div class="status" id="list-status">로딩 중...</div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>이름</th>
+              <th>설명</th>
+              <th>플래그</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody id="intents-tbody">
+            <!-- 데이터 렌더 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // TODO: 여기를 네 Supabase 프로젝트 값으로 교체하세요.
+    const SUPABASE_URL = "https://ecscluxtejjwkuiyrbzn.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjc2NsdXh0ZWpqd2t1aXlyYnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODc4ODQsImV4cCI6MjA4MDI2Mzg4NH0.NNs2V1-GjL5fVaKjVNbI6eKCq8fk8-HrN57H_EIHgm4";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const tbody = document.getElementById("intents-tbody");
+    const listStatusEl = document.getElementById("list-status");
+    const formStatusEl = document.getElementById("form-status");
+    const formEl = document.getElementById("intent-form");
+    const reloadBtn = document.getElementById("reload-btn");
+    const submitBtn = document.getElementById("submit-btn");
+    const cancelEditBtn = document.getElementById("cancel-edit-btn");
+    const editModePill = document.getElementById("edit-mode-pill");
+
+    const nameInput = document.getElementById("name");
+    const descInput = document.getElementById("description");
+    const isActionInput = document.getElementById("is_action");
+    const isComplaintLikeInput = document.getElementById("is_complaint_like");
+
+    let editingId = null;
+
+    function setFormStatus(msg, isError = false) {
+      formStatusEl.textContent = msg || "";
+      formStatusEl.style.color = isError ? "#b91c1c" : "#6b7280";
+    }
+
+    function setListStatus(msg, isError = false) {
+      listStatusEl.textContent = msg || "";
+      listStatusEl.style.color = isError ? "#b91c1c" : "#6b7280";
+    }
+
+    function enterEditMode(intent) {
+      editingId = intent.id;
+      nameInput.value = intent.name;
+      descInput.value = intent.description || "";
+      isActionInput.checked = !!intent.is_action;
+      isComplaintLikeInput.checked = !!intent.is_complaint_like;
+
+      submitBtn.textContent = "✓ 인텐트 수정 저장";
+      cancelEditBtn.style.display = "inline-flex";
+      editModePill.style.display = "inline-flex";
+      setFormStatus("편집 모드: 저장하면 해당 인텐트가 수정됩니다.");
+    }
+
+    function resetForm() {
+      editingId = null;
+      formEl.reset();
+      submitBtn.textContent = "+ 인텐트 저장";
+      cancelEditBtn.style.display = "none";
+      editModePill.style.display = "none";
+      setFormStatus("");
+    }
+
+    async function loadIntents() {
+      setListStatus("로딩 중...");
+      tbody.innerHTML = "";
+      const { data, error } = await supabase
+        .from("intents")
+        .select("*")
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error("loadIntents error:", error);
+        setListStatus("목록을 불러오지 못했습니다.");
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setListStatus("등록된 인텐트가 없습니다. 위 폼에서 새로 추가하세요.");
+        return;
+      }
+
+      setListStatus(`총 ${data.length}개 인텐트`);
+
+      data.forEach((intent) => {
+        const tr = document.createElement("tr");
+
+        const tdId = document.createElement("td");
+        tdId.textContent = intent.id;
+        tdId.className = "mono";
+
+        const tdName = document.createElement("td");
+        tdName.innerHTML = `<span class="mono">${intent.name}</span>`;
+
+        const tdDesc = document.createElement("td");
+        tdDesc.textContent = intent.description || "";
+
+        const tdFlags = document.createElement("td");
+        const flags = [];
+        if (intent.is_action) {
+          const span = document.createElement("span");
+          span.className = "pill pill-amber";
+          span.textContent = "야간 처리 보류";
+          flags.push(span);
+        }
+        if (intent.is_complaint_like) {
+          const span = document.createElement("span");
+          span.className = "pill pill-red";
+          span.textContent = "민감/클레임 성격";
+          flags.push(span);
+        }
+        if (flags.length === 0) {
+          const span = document.createElement("span");
+          span.className = "pill";
+          span.textContent = "일반";
+          flags.push(span);
+        }
+        flags.forEach((el, idx) => {
+          if (idx > 0) tdFlags.appendChild(document.createTextNode(" "));
+          tdFlags.appendChild(el);
+        });
+
+        const tdActions = document.createElement("td");
+        const actionsDiv = document.createElement("div");
+        actionsDiv.className = "table-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "btn-secondary";
+        editBtn.textContent = "수정";
+        editBtn.onclick = () => enterEditMode(intent);
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn-danger";
+        delBtn.textContent = "삭제";
+        delBtn.onclick = async () => {
+          const ok = window.confirm(
+            `정말 삭제할까요?\n\n[${intent.name}] 인텐트를 제거합니다.`
+          );
+          if (!ok) return;
+          const { error: delError } = await supabase
+            .from("intents")
+            .delete()
+            .eq("id", intent.id);
+          if (delError) {
+            console.error("delete intent error:", delError);
+            alert("삭제 중 오류가 발생했습니다.");
+            return;
+          }
+          if (editingId === intent.id) {
+            resetForm();
+          }
+          await loadIntents();
+        };
+
+        actionsDiv.appendChild(editBtn);
+        actionsDiv.appendChild(delBtn);
+        tdActions.appendChild(actionsDiv);
+
+        tr.appendChild(tdId);
+        tr.appendChild(tdName);
+        tr.appendChild(tdDesc);
+        tr.appendChild(tdFlags);
+        tr.appendChild(tdActions);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    formEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setFormStatus("");
+
+      const name = nameInput.value.trim();
+      const description = descInput.value.trim();
+      const is_action = isActionInput.checked;
+      const is_complaint_like = isComplaintLikeInput.checked;
+
+      if (!name) {
+        setFormStatus("이름은 필수입니다.", true);
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = editingId ? "저장 중..." : "추가 중...";
+
+      try {
+        if (editingId) {
+          // UPDATE
+          const { error } = await supabase
+            .from("intents")
+            .update({
+              name,
+              description,
+              is_action,
+              is_complaint_like,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", editingId);
+
+          if (error) {
+            console.error("update error:", error);
+            setFormStatus("수정 중 오류가 발생했습니다.", true);
+          } else {
+            setFormStatus("수정 완료!");
+            resetForm();
+            await loadIntents();
+          }
+        } else {
+          // INSERT
+          const { error } = await supabase.from("intents").insert({
+            name,
+            description,
+            is_action,
+            is_complaint_like,
+          });
+
+          if (error) {
+            console.error("insert error:", error);
+            setFormStatus("추가 중 오류가 발생했습니다. name이 중복되지 않는지 확인하세요.", true);
+          } else {
+            setFormStatus("추가 완료!");
+            formEl.reset();
+            await loadIntents();
+          }
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = editingId ? "✓ 인텐트 수정 저장" : "+ 인텐트 저장";
+      }
+    });
+
+    cancelEditBtn.addEventListener("click", () => {
+      resetForm();
+    });
+
+    reloadBtn.addEventListener("click", () => {
+      loadIntents();
+    });
+
+    // 초기 로딩
+    loadIntents();
+  </script>
+</body>
+</html>
