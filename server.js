@@ -4,6 +4,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import pkg from "pg";
 import OpenAI from "openai";
+import {
+  ORCHESTRATOR_SYSTEM_PROMPT,
+  buildOrchestratorUserPrompt,
+} from "./llm_spec.js";
 
 dotenv.config();
 const { Pool } = pkg;
@@ -40,10 +44,9 @@ function isNightTime(date = new Date()) {
 let cachedConfig = {
   intents: [],
   actionIntentNames: [],
-  nightDeferReply: null,
-  complaintReply: null,
+  templates: {},
   lastLoadedAt: null,
-};
+};  
 
 async function loadConfig() {
   const client = await pool.connect();
@@ -54,7 +57,6 @@ async function loadConfig() {
       FROM intents
       ORDER BY id;
     `);
-
     const intents = intentsRes.rows;
     const actionIntentNames = intents
       .filter((i) => i.is_action)
@@ -70,26 +72,43 @@ async function loadConfig() {
       settings[row.key] = row.value;
     }
 
+    // 3) intent_templates 🔥
+    const tmplRes = await client.query(`
+      SELECT intent_name, sub_intent, display_label, message
+      FROM intent_templates
+      WHERE is_active = TRUE
+      ORDER BY intent_name, sort_order, id;
+    `);
+
+    const templatesByIntent = {};
+    for (const row of tmplRes.rows) {
+      if (!templatesByIntent[row.intent_name]) {
+        templatesByIntent[row.intent_name] = [];
+      }
+      templatesByIntent[row.intent_name].push({
+        sub_intent: row.sub_intent,
+        label: row.display_label,
+        message: row.message,
+      });
+    }
+
     cachedConfig = {
       intents,
       actionIntentNames,
-      nightDeferReply:
-        settings["night_defer_reply"] ||
-        "지금은 야간 자동응답 시간이라 접수만 가능합니다.\n상세 확인 후 오전 10시 이후에 다시 안내드릴게요 :)",
-      complaintReply:
-        settings["complaint_reply"] ||
-        "불편을 드려 정말 죄송합니다.\n내용을 담당자에게 바로 전달했고, 가능한 빠르게 직접 연락드리겠습니다.",
+      templates: templatesByIntent,   // 🔹 추가
       lastLoadedAt: new Date(),
     };
 
     console.log("✅ config loaded:", {
       intents: intents.length,
       actionIntentNames: actionIntentNames.length,
+      templatesIntents: Object.keys(templatesByIntent).length,
     });
   } finally {
     client.release();
   }
 }
+
 
 // 서버 시작할 때 한 번 로드
 await loadConfig();
@@ -101,88 +120,7 @@ async function getGuestState(phoneNumber) {
   return "UNKNOWN";
 }
 
-// ---------- 인텐트 분류 LLM ----------
-async function classifyIntent(text, guestState) {
-  // config 없으면 한 번 강제 로드 (안전장치)
-  if (!cachedConfig.lastLoadedAt) {
-    await loadConfig();
-  }
 
-  const intentsText = cachedConfig.intents
-    .map(
-      (i) =>
-        `- ${i.name} : ${i.description}${
-          i.is_action ? " (야간에는 처리 보류 대상)" : ""
-        }`
-    )
-    .join("\n");
-
-  const systemPrompt = `
-너는 게스트하우스 문자 자동응답 시스템의 "인텐트 분류기"야.
-아래 규칙을 꼭 지켜.
-
-- 출력 형식은 반드시 JSON으로만 내보내.
-- 키는 항상 intent, confidence, is_complaint 3가지.
-- intent는 문자열, confidence는 0~1 숫자, is_complaint는 true/false.
-
-intent는 일단 아래 중에서 가장 어울리는 걸 고르고, 딱 맞는게 없으면 "GENERIC"으로 해.
-
-가능한 intent 값 목록:
-${intentsText || "- GENERIC : 기타 문의"}
-`;
-
-  const userPrompt = `
-[문자 내용]
-"${text}"
-
-[현재 게스트 상태]
-"${guestState}"
-
-위 문자에 대해 intent, confidence(0~1), is_complaint를 JSON 하나로만 반환해.
-예시: {"intent":"CHECKIN_TIME","confidence":0.83,"is_complaint":false}
-`;
-
-  try {
-    const resp = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt.trim() },
-        { role: "user", content: userPrompt.trim() },
-      ],
-      temperature: 0.0,
-    });
-
-    const raw = resp.choices[0]?.message?.content?.trim() || "";
-    let parsed;
-
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      console.warn("⚠️ classifyIntent JSON 파싱 실패, raw:", raw);
-      // 파싱 실패 시 GENERIC fallback
-      return {
-        intent: "GENERIC",
-        confidence: 0.3,
-        is_complaint: false,
-      };
-    }
-
-    return {
-      intent: parsed.intent || "GENERIC",
-      confidence:
-        typeof parsed.confidence === "number" ? parsed.confidence : 0.5,
-      is_complaint: !!parsed.is_complaint,
-    };
-  } catch (err) {
-    console.error("❌ classifyIntent OpenAI error:", err);
-    // LLM 오류시도 안전한 기본값
-    return {
-      intent: "GENERIC",
-      confidence: 0.2,
-      is_complaint: false,
-    };
-  }
-}
 
 // ---------- (TODO) 욕설/클레임 감지 ----------
 function isComplaint(intentResult) {
@@ -190,68 +128,9 @@ function isComplaint(intentResult) {
   return intentResult.is_complaint === true;
 }
 
-// ---------- (TODO) 야간 접수용 기본 멘트 ----------
-function buildNightDeferReply(intentResult, guestState) {
-  return (
-    "지금은 야간 자동응답 시간이라 접수만 가능합니다.\n" +
-    "상세 확인 후 오전 10시 이후에 다시 안내드릴게요 :)"
-  );
-}
 
-// ---------- (TODO) 클레임 기본 멘트 ----------
-function buildComplaintAutoReply() {
-  return (
-    "불편을 드려 정말 죄송합니다.\n" +
-    "내용을 담당자에게 바로 전달했고, 가능한 빠르게 직접 연락드리겠습니다."
-  );
-}
-
-// ---------- 답변 생성 LLM (RAG 없이 1차 버전) ----------
-async function generateReplyWithLLM({ text, guestState, intent, knowledge = [] }) {
-  const kbText = knowledge
-    .map((k) => `- ${k.title}: ${k.content}`)
-    .join("\n");
-
-  const userPrompt = `
-[손님 문자 내용]
-${text}
-
-[현재 게스트 상태 guestState (예: NO_RECORD, BOOKED_UNPAID, BOOKED_PAID, STAYING_TODAY 등)]
-${guestState}
-
-[인텐트 intent]
-${intent}
-
-[관련 지식 (knowledge_base에서 온 내용)]
-${kbText || "(관련 지식 없음)"}
-
-위 정보를 참고해서, 손님에게 보낼 답장 한 개를 한국어로 만들어줘.
-앞뒤 따옴표 없이, 실제 문자 그대로 쓸 수 있게 문장만 출력해.
-`;
-
-  try {
-    const resp = await openai.chat.completions.create({
-      model: OPENAI_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt.trim() },
-        { role: "user", content: userPrompt.trim() },
-      ],
-      temperature: 0.4,
-    });
-
-    const reply =
-      resp.choices[0]?.message?.content?.trim() ||
-      "문의 감사합니다! 현재 자동응답 시스템 세팅 중입니다 :)";
-
-    return reply;
-  } catch (err) {
-    console.error("❌ generateReplyWithLLM OpenAI error:", err);
-    return "문의 감사합니다! 현재 자동응답 시스템 세팅 중이라, 조금 뒤에 다시 안내드리겠습니다 :)";
-  }
-}
-
-async function retrieveKnowledge(intentResult) {
-  const client = await pool.connect();
+async function retrieveKnowledge(intentResult, dbClient) {
+  const client = dbClient || await pool.connect(); 
   try {
     const q = `
       SELECT title, content
@@ -263,7 +142,7 @@ async function retrieveKnowledge(intentResult) {
     const { rows } = await client.query(q, [intentResult.intent]);
     return rows;
   } finally {
-    client.release();
+    if (!dbClient) client.release();
   }
 }
 
@@ -277,6 +156,7 @@ async function sendSms(to, text) {
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
 
 // ---------- SMS Webhook 엔드포인트 ----------
 /**
@@ -298,13 +178,82 @@ function parseSmsProviderPayload(body) {
   return { from, text, receivedAt };
 }
 
-function buildNightDeferReply(intentResult, guestState) {
-  return cachedConfig.nightDeferReply;
+
+// RAG용 지식 조회 (일단은 PARTY 관련만, 나중에 확장 가능)
+async function retrieveKnowledgeForRAG({ text, client }) {
+  // TODO: 나중에는 text 기반 벡터 서치 or full text search 로 바꾸면 됨
+  const q = `
+    SELECT category, title, content
+    FROM knowledge_base
+    WHERE category IN ('PARTY', 'PARTY_RESERVATION_FLOW', 'CHECKIN', 'CHECKOUT')
+    ORDER BY updated_at DESC
+    LIMIT 20;
+  `;
+  const { rows } = await client.query(q);
+  return rows;
 }
 
-function buildComplaintAutoReply() {
-  return cachedConfig.complaintReply;
+async function runOrchestratorLLM({ text, guestState, history, knowledge }) {
+  const userPrompt = buildOrchestratorUserPrompt({
+    text,
+    guestState,
+    history,
+    knowledge,
+  });
+
+  try {
+    const resp = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      messages: [
+        { role: "system", content: ORCHESTRATOR_SYSTEM_PROMPT.trim() },
+        { role: "user", content: userPrompt.trim() },
+      ],
+      temperature: 0.3,
+    });
+
+    const raw = resp.choices[0]?.message?.content?.trim() || "{}";
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error("❌ Orchestrator JSON parse error:", raw);
+      parsed = null;
+    }
+
+    if (!parsed || typeof parsed !== "object") {
+      return {
+        reply_text:
+          "문의 감사합니다! 현재 자동응답 시스템 세팅 중이라, 조금 뒤에 다시 안내드리겠습니다 :)",
+        intent: "GENERIC",
+        flow_type: null,
+        slots: {},
+        need_followup: true,
+        end_flow: false,
+      };
+    }
+
+    return {
+      reply_text: parsed.reply_text || "",
+      intent: parsed.intent || "GENERIC",
+      flow_type: parsed.flow_type || null,
+      slots: parsed.slots || {},
+      need_followup: !!parsed.need_followup,
+      end_flow: !!parsed.end_flow,
+    };
+  } catch (err) {
+    console.error("❌ runOrchestratorLLM error:", err);
+    return {
+      reply_text:
+        "문의 감사합니다! 현재 자동응답 시스템 세팅 중이라, 조금 뒤에 다시 안내드리겠습니다 :)",
+      intent: "GENERIC",
+      flow_type: null,
+      slots: {},
+      need_followup: true,
+      end_flow: false,
+    };
+  }
 }
+
 
 app.post("/sms/webhook", async (req, res) => {
   const client = await pool.connect();
@@ -315,130 +264,439 @@ app.post("/sms/webhook", async (req, res) => {
       return res.status(400).json({ error: "from, text is required" });
     }
 
-    // 1) IN 메세지 로그 저장
-    const insertInQuery = `
+    await client.query("BEGIN");
+
+    // 1) IN 메세지 저장
+    const inRes = await client.query(
+      `
       INSERT INTO messages (direction, phone_number, text, created_at)
       VALUES ('IN', $1, $2, $3)
-      RETURNING id, created_at;
-    `;
-    const inResult = await client.query(insertInQuery, [
-      from,
-      text,
-      receivedAt,
-    ]);
-    const incomingId = inResult.rows[0].id;
+      RETURNING id;
+      `,
+      [from, text, receivedAt]
+    );
+    const incomingId = inRes.rows[0].id;
 
-    // 2) 게스트 상태 조회
+    // 2) 게스트 상태 + 최근 대화 히스토리
     const guestState = await getGuestState(from);
 
-    // 3) 인텐트 분류
-    const intentResult = await classifyIntent(text, guestState);
+    const historyRes = await client.query(
+      `
+      SELECT direction, text
+      FROM messages
+      WHERE phone_number = $1
+      ORDER BY id DESC
+      LIMIT 10;
+      `,
+      [from]
+    );
+    const history = historyRes.rows
+      .reverse()
+      .map((r) => ({ direction: r.direction, text: r.text }));
 
-    // 4) 시간대/정책에 따라 처리 방식 결정
-    const night = isNightTime(receivedAt);
-    const actionIntents = cachedConfig.actionIntentNames;
-    const shouldDefer =
-      night && actionIntents.includes(intentResult.intent);
+    // 3) RAG: 관련 지식 불러오기
+    const knowledge = await retrieveKnowledgeForRAG({ text, client });
 
-    let replyText = "";
-    let needFollowup = false;
-    let followupReason = null;
+    // 4) LLM 오케스트레이터 호출
+    const {
+      reply_text,
+      intent,
+      flow_type,
+      slots,
+      need_followup,
+      end_flow,
+    } = await runOrchestratorLLM({
+      text,
+      guestState,
+      history,
+      knowledge,
+    });
 
-    if (isComplaint(intentResult)) {
-      // 욕설/클레임
-      replyText = buildComplaintAutoReply();
-      needFollowup = true;
-      followupReason = "COMPLAINT";
-    } else if (shouldDefer) {
-      // 야간 접수만
-      replyText = buildNightDeferReply(intentResult, guestState);
-      needFollowup = true;
-      followupReason = "NIGHT_ACTION";
-    } else {
-      // 일반 케이스: RAG + LLM 답변
-      const knowledgeSnippets = await retrieveKnowledge(intentResult);
-      replyText = await generateReplyWithLLM({
-        text,
-        guestState,
-        intent: intentResult.intent,
-        knowledge: knowledgeSnippets,
-      });
+    let outgoingId = null;
+
+    // 5) 문자 발송 + OUT 저장
+    if (reply_text && reply_text.trim() !== "") {
+      await sendSms(from, reply_text);
+
+      const outRes = await client.query(
+        `
+        INSERT INTO messages (
+          direction, phone_number, text,
+          intent, guest_state, handled_by,
+          need_followup, resolved, reply_to_id,
+          slots, flow_type
+        )
+        VALUES (
+          'OUT', $1, $2,
+          $3, $4, $5,
+          $6, $7, $8,
+          $9, $10
+        )
+        RETURNING id;
+        `,
+        [
+          from,
+          reply_text,
+          intent || null,
+          guestState || null,
+          "LLM_ORCHESTRATOR",
+          !!need_followup,
+          !need_followup,
+          incomingId,
+          Object.keys(slots || {}).length > 0 ? JSON.stringify(slots) : null,
+          flow_type || null,
+        ]
+      );
+      outgoingId = outRes.rows[0].id;
     }
 
-    // 5) 문자 실제 발송 (지금은 콘솔만)
-    await sendSms(from, replyText);
-
-    // 6) OUT 메시지 로그 + IN에 대한 응답 관계, 분류 결과 업데이트
-    const insertOutQuery = `
-      INSERT INTO messages (
-        direction, phone_number, text, intent, confidence,
-        guest_state, handled_by, need_followup, resolved, reply_to_id
-      )
-      VALUES (
-        'OUT', $1, $2, $3, $4,
-        $5, $6, $7, $8, $9
-      )
-      RETURNING id;
-    `;
-
-    const handledBy = needFollowup ? "AUTO_PENDING" : "AUTO";
-    const resolved = !needFollowup;
-
-    const outResult = await client.query(insertOutQuery, [
-      from,
-      replyText,
-      intentResult.intent,
-      intentResult.confidence,
-      guestState,
-      handledBy,
-      needFollowup,
-      resolved,
-      incomingId,
-    ]);
-    const outgoingId = outResult.rows[0].id;
-
-    // 7) followup_queue에 등록
-    if (needFollowup) {
-      const insertFollowupQuery = `
+    // 6) followup_queue 등록 (필요 시)
+    if (need_followup) {
+      await client.query(
+        `
         INSERT INTO followup_queue (message_id, status, reason)
         VALUES ($1, 'PENDING', $2);
-      `;
-      await client.query(insertFollowupQuery, [incomingId, followupReason]);
+        `,
+        [incomingId, "LLM_FLAGGED"]
+      );
     }
 
-    // 8) IN 메시지도 intent/guest_state 업데이트
-    const updateInQuery = `
+    // 7) IN 메시지 업데이트
+    await client.query(
+      `
       UPDATE messages
       SET intent = $1,
-          confidence = $2,
-          guest_state = $3,
-          need_followup = $4,
-          resolved = $5
-      WHERE id = $6;
-    `;
-    await client.query(updateInQuery, [
-      intentResult.intent,
-      intentResult.confidence,
-      guestState,
-      needFollowup,
-      resolved,
-      incomingId,
-    ]);
+          guest_state = $2,
+          need_followup = $3,
+          resolved = $4
+      WHERE id = $5;
+      `,
+      [intent || null, guestState || null, !!need_followup, !need_followup, incomingId]
+    );
 
-    res.status(200).json({
+    await client.query("COMMIT");
+
+    res.json({
       ok: true,
       incoming_id: incomingId,
       outgoing_id: outgoingId,
-      intent: intentResult.intent,
-      guest_state: guestState,
-      night,
-      need_followup: needFollowup,
+      intent,
+      flow_type,
+      end_flow,
     });
   } catch (err) {
-    console.error("❌ Error in /sms/webhook:", err);
+    await client.query("ROLLBACK");
+    console.error("❌ /sms/webhook error:", err);
     res.status(500).json({ error: "internal_server_error" });
   } finally {
     client.release();
+  }
+});
+
+
+// ==========================================
+// [ADMIN API] 1. 인텐트 관리 (Intents)
+// ==========================================
+
+// 조회
+app.get("/admin/intents", async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const result = await client.query("SELECT * FROM intents ORDER BY id");
+    res.json(result.rows);
+  } finally { client.release(); }
+});
+
+// 추가
+app.post("/admin/intents", async (req, res) => {
+  const { name, description, is_action, is_complaint_like } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query(
+      `INSERT INTO intents (name, description, is_action, is_complaint_like) VALUES ($1, $2, $3, $4)`,
+      [name, description, is_action, is_complaint_like]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+// 수정
+app.put("/admin/intents/:id", async (req, res) => {
+  const { id } = req.params;
+  const { description, is_action, is_complaint_like } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query(
+      `UPDATE intents SET description=$1, is_action=$2, is_complaint_like=$3 WHERE id=$4`,
+      [description, is_action, is_complaint_like, id]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+// 삭제
+app.delete("/admin/intents/:id", async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query(`DELETE FROM intents WHERE id=$1`, [id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+
+// ==========================================
+// [ADMIN API] 2. 템플릿 관리 (Templates)
+// ==========================================
+
+// 조회
+app.get("/admin/templates", async (req, res) => {
+  const { intent } = req.query;
+  const client = await pool.connect();
+  try {
+    let q = `SELECT * FROM intent_templates WHERE is_active = TRUE`;
+    const params = [];
+    if (intent) {
+      q += ` AND intent_name = $1`;
+      params.push(intent);
+    }
+    q += ` ORDER BY intent_name, sort_order, id`;
+    const result = await client.query(q, params);
+    res.json(result.rows);
+  } finally { client.release(); }
+});
+
+// 추가
+app.post("/admin/templates", async (req, res) => {
+  const { intent_name, sub_intent, display_label, message } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query(
+      `INSERT INTO intent_templates (intent_name, sub_intent, display_label, message) VALUES ($1, $2, $3, $4)`,
+      [intent_name, sub_intent, display_label, message]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+// 수정
+app.put("/admin/templates/:id", async (req, res) => {
+  const { id } = req.params;
+  const { intent_name, sub_intent, display_label, message } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query(
+      `UPDATE intent_templates SET intent_name=$1, sub_intent=$2, display_label=$3, message=$4 WHERE id=$5`,
+      [intent_name, sub_intent, display_label, message, id]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+// 삭제
+app.delete("/admin/templates/:id", async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query(`DELETE FROM intent_templates WHERE id=$1`, [id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+
+// ==========================================
+// [ADMIN API] 3. 지식 관리 (Knowledge Base)
+// ==========================================
+
+// 조회
+app.get("/admin/knowledge", async (req, res) => {
+  const { intent } = req.query;
+  const client = await pool.connect();
+  try {
+    let q = `SELECT * FROM knowledge_base`;
+    const params = [];
+    if (intent) {
+      q += ` WHERE category = $1`;
+      params.push(intent);
+    }
+    q += ` ORDER BY updated_at DESC`;
+    const result = await client.query(q, params);
+    res.json(result.rows);
+  } finally { client.release(); }
+});
+
+// 추가
+app.post("/admin/knowledge", async (req, res) => {
+  const { category, title, content } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query(
+      `INSERT INTO knowledge_base (category, title, content) VALUES ($1, $2, $3)`,
+      [category, title, content]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+// 수정
+app.put("/admin/knowledge/:id", async (req, res) => {
+  const { id } = req.params;
+  const { category, title, content } = req.body;
+  const client = await pool.connect();
+  try {
+    await client.query(
+      `UPDATE knowledge_base SET category=$1, title=$2, content=$3, updated_at=NOW() WHERE id=$4`,
+      [category, title, content, id]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+// 삭제
+app.delete("/admin/knowledge/:id", async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query(`DELETE FROM knowledge_base WHERE id=$1`, [id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+  finally { client.release(); }
+});
+
+
+// ==========================================
+// [ADMIN API] 4. 팔로우업 & 설정 관리
+// ==========================================
+
+// 팔로우업 상태/메모 수정
+app.patch("/admin/followups/:id", async (req, res) => {
+  const { id } = req.params;
+  const { status, memo, resolved } = req.body;
+
+  const client = await pool.connect();
+  try {
+    const fields = [];
+    const params = [];
+    let idx = 1;
+
+    if (status) {
+      fields.push(`status = $${idx++}`);
+      params.push(status);
+    }
+    if (memo !== undefined) {
+      fields.push(`memo = $${idx++}`);
+      params.push(memo);
+    }
+    if (resolved !== undefined) {
+      fields.push(`resolved = $${idx++}`);
+      params.push(resolved);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: "no fields to update" });
+    }
+
+    const q = `
+      UPDATE followup_queue
+      SET ${fields.join(", ")},
+          updated_at = NOW()
+      WHERE id = $${idx}
+    `;
+    params.push(id);
+
+    await client.query(q, params);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ followup PATCH error:", err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// 팔로우업 상태 수정 (완료 처리 or 메모 저장)
+app.get("/admin/followups", async (req, res) => {
+  const status = req.query.status;
+  const reason = req.query.reason;
+  
+  const client = await pool.connect();
+  try {
+    // 1. 쿼리 작성: 컬럼명 앞에 f. 또는 m. 을 명확히 붙여줍니다.
+    let q = `
+      SELECT 
+        f.id, 
+        f.status, 
+        f.reason, 
+        f.memo, 
+        f.created_at,   -- 여기가 핵심! f.created_at 이라고 명시
+        m.phone_number, 
+        m.text, 
+        m.guest_state, 
+        m.intent
+      FROM followup_queue f
+      LEFT JOIN messages m ON f.message_id = m.id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    let idx = 1;
+
+    // 2. 필터 조건
+    if (status && status !== 'ALL') {
+      q += ` AND f.status = $${idx++}`;
+      params.push(status);
+    }
+    if (reason) {
+      q += ` AND f.reason = $${idx++}`;
+      params.push(reason);
+    }
+    
+    // 3. 정렬: 여기서도 f.created_at 이라고 명시해야 에러가 안 납니다.
+    q += ` ORDER BY f.created_at DESC LIMIT 100`;
+
+    // (디버깅용) 터미널에 쿼리를 찍어봅니다.
+    // console.log("📝 실행될 쿼리:", q);
+
+    const result = await client.query(q, params);
+
+    res.json(result.rows.map(row => ({
+      id: row.id,
+      status: row.status,
+      reason: row.reason,
+      memo: row.memo,
+      message: {
+        phone_number: row.phone_number || "정보 없음", // LEFT JOIN 대비
+        text: row.text || "(삭제된 메시지)",
+        guest_state: row.guest_state,
+        intent: row.intent,
+        created_at: row.created_at
+      }
+    })));
+
+  } catch (err) { 
+    // ★ 에러가 나면 터미널에 빨간색으로 이유를 출력합니다.
+    console.error("❌ Followup 조회 에러:", err); 
+    res.status(500).json({ error: err.message }); 
+  } finally { 
+    client.release(); 
+  }
+});
+
+// 설정 리로드
+app.post("/admin/reload-config", async (req, res) => {
+  try {
+    await loadConfig();
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

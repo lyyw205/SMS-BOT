@@ -2,517 +2,1280 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>SMS Bot · Intents 관리</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SMS Bot Admin Dashboard</title>
   <style>
-    :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color-scheme: light;
+        @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
+        font-weight: 100;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
+        font-weight: 200;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
+        font-weight: 300;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+        font-weight: 400;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+        font-weight: 500;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
+        font-weight: 600;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
+        font-weight: 700;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
+        font-weight: 800;
+        font-display: swap;
+    }
+
+    @font-face {
+        font-family: 'Pretendard';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
+        font-weight: 900;
+        font-display: swap;
+    }
+    /* ---------- 기본 레이아웃 ---------- */
+    * {
+      box-sizing: border-box;
     }
     body {
       margin: 0;
-      padding: 0;
-      background: #f5f5f7;
-      color: #111827;
+      font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f5f5f7;
+      color: #222;
     }
-    .page {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px 16px 64px;
-    }
-    h1 {
-      font-size: 1.6rem;
-      margin-bottom: 4px;
-    }
-    .subtitle {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-bottom: 16px;
-    }
-    .card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 16px 16px 20px;
-      box-shadow: 0 8px 20px rgba(15,23,42,0.06);
-      margin-bottom: 16px;
-    }
-    .card-header {
+
+    /* ---------- 상단 네비게이션 ---------- */
+    .top-nav {
+      background-color: #111827;
+      color: #f9fafb;
+      padding: 10px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 12px;
     }
-    .card-title {
-      font-weight: 600;
+    .nav-brand {
+      font-weight: 700;
       font-size: 1rem;
     }
-    .badge {
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #eff6ff;
-      color: #1d4ed8;
-    }
-    form {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
-      gap: 10px 16px;
-      align-items: flex-start;
-    }
-    label {
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 0.8rem;
-      font-weight: 500;
-      color: #374151;
-      display: block;
-      margin-bottom: 4px;
     }
-    input[type="text"],
-    textarea {
-      width: 100%;
-      box-sizing: border-box;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      padding: 8px 10px;
+
+    /* ---------- 공통 컨테이너 / 카드 ---------- */
+    .page-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+    .ta-center {
+      text-align: center;
+    }
+    .ta-end {
+      text-align: end;
+    }
+    .card {
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      padding: 10px;
+    }
+    .card-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       font-size: 0.9rem;
-      outline: none;
-      background: #f9fafb;
     }
-    textarea {
-      min-height: 60px;
+    .card-header {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .card-body {
+      padding: 10px 14px;
+    }
+    .card-body.no-padding {
+      padding: 0;
+    }
+
+    /* ---------- 버튼 스타일 ---------- */
+    .btn {
+      border: 1px solid #d1d5db;
+      background-color: #f9fafb;
+      color: #111827;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      background-color: #e5e7eb;
+    }
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      border-color: #4f46e5;
+      background-color: #4f46e5;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background-color: #4338ca;
+      border-color: #4338ca;
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: #f9fafb;
+      border-color: #9ca3af;
+    }
+    .btn-outline:hover {
+      background-color: rgba(156,163,175,0.1);
+    }
+
+    .btn-xs {
+      padding: 2px 6px;
+      font-size: 0.75rem;
+    }
+
+    /* ---------- 텍스트 / 폼 공통 ---------- */
+    .small-text {
+      font-size: 0.8rem;
+    }
+    .monospace {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.85rem;
+    }
+    textarea,
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      outline: none;
+      background-color: #fff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    textarea:focus,
+    input[type="text"]:focus,
+    select:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 1px rgba(79,70,229,0.3);
+    }
+    textarea.form-control {
+      font-size: 0.85rem;
       resize: vertical;
     }
-    input[type="text"]:focus,
-    textarea:focus {
-      border-color: #6366f1;
-      background: #ffffff;
-      box-shadow: 0 0 0 1px rgba(99,102,241,0.2);
+    .form-label {
+      display: block;
+      font-size: 1.0rem;
+      margin-bottom: 5px;
+      color: #374151;
+      padding-left: 5px;
     }
-    .checkbox-row {
+    .form-text {
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+    .form-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .form-col {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .form-check {
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-top: 22px;
+      margin-bottom: 4px;
       font-size: 0.8rem;
     }
-    .form-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 22px;
-      flex-wrap: wrap;
-    }
-    button {
-      border-radius: 999px;
-      border: none;
-      padding: 8px 14px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: transform 0.05s ease, box-shadow 0.1s ease, background 0.1s ease;
-    }
-    button:active {
-      transform: translateY(1px);
-      box-shadow: none;
-    }
-    .btn-primary {
-      background: #4f46e5;
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(79,70,229,0.3);
-    }
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-    .btn-danger {
-      background: #ef4444;
-      color: #fff;
-    }
-    .status {
-      font-size: 0.8rem;
-      color: #6b7280;
-      margin-top: 6px;
-      min-height: 18px;
+    .form-check-input {
+      width: 14px;
+      height: 14px;
     }
 
-    table {
+    /* ---------- 탭 네비게이션 ---------- */
+    .tab-nav {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 12px;
+      gap: 4px;
+      padding-left: 0;
+      list-style: none;
+    }
+    .tab-nav li {
+      margin: 0;
+    }
+    .tab-button {
+      border: none;
+      background: transparent;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      border: 1px solid transparent;
+      border-bottom: none;
+      color: #6b7280;
+    }
+    .tab-button.active {
+      background-color: #fff;
+      border-color: #e5e7eb;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* ---------- 테이블 ---------- */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+    table.table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
     }
-    th, td {
+    .table thead {
+      background-color: #f3f4f6;
+    }
+    .table th,
+    .table td {
+      padding: 8px 8px;
       border-bottom: 1px solid #e5e7eb;
-      padding: 8px 6px;
+      vertical-align: middle;
+    }
+    .table th {
       text-align: left;
-      vertical-align: top;
+      font-weight: 600;
+      color: #4b5563;
+      white-space: nowrap;
     }
-    th {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: #6b7280;
-      background: #f3f4f6;
+    .table td {
+      color: #111827;
     }
-    tbody tr:hover {
-      background: #f9fafb;
+    .table td.text-center,
+    .table th.text-center {
+      text-align: center;
     }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      background: #e5e7eb;
-      color: #374151;
-      gap: 4px;
-    }
-    .pill-green {
-      background: #dcfce7;
-      color: #166534;
-    }
-    .pill-amber {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    .pill-red {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-    .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 0.8rem;
-    }
-    .table-actions {
+
+    /* ---------- 레이아웃 (인텐트/템플릿 2컬럼) ---------- */
+    .split-layout {
       display: flex;
-      gap: 6px;
+      flex-direction: column;
       flex-wrap: wrap;
+      gap: 16px;
     }
-    @media (max-width: 640px) {
-      th:nth-child(1), td:nth-child(1) { width: 60px; }
-      th:nth-child(2), td:nth-child(2) { width: 120px; }
-      th:nth-child(4), td:nth-child(4) { width: 90px; }
+    .split-left {
+      flex: 0 0 32%;
+      min-width: 260px;
     }
+    .split-right {
+      flex: 1 1 0;
+      min-width: 280px;
+    }
+
+    @media (max-width: 768px) {
+      .split-layout {
+        flex-direction: column;
+      }
+      .split-left,
+      .split-right {
+        flex: 1 1 100%;
+      }
+    }
+
+    /* ---------- 셀렉트 inline 용 ---------- */
+    .inline-select {
+      width: auto;
+      min-width: 100px;
+      display: inline-block;
+      margin-left: 8px;
+    }
+
+    /* ---------- 모달 ---------- */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-backdrop.show {
+      display: flex;
+    }
+    .modal {
+      background-color: #fff;
+      border-radius: 12px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .modal-lg {
+      max-width: 800px;
+    }
+    .mb-2 {
+      margin-bottom: 12px;
+    }
+    .modal-input {
+      width: 100%;
+      padding: 8px 6px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      outline: none;
+      background-color: #fff;
+      transition: 
+        border-color 0.15s ease, 
+        box-shadow 0.15s ease;
+    }
+    .modal-header,
+    .modal-footer {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+    .modal-footer {
+      border-top: 1px solid #e5e7eb;
+      border-bottom: none;
+    }
+    .modal-body {
+      padding: 10px 14px;
+      font-size: 0.85rem;
+    }
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 10px 0;
+    }
+    .btn-close {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      width: 20px;
+      height: 20px;
+      position: relative;
+    }
+    .btn-close::before,
+    .btn-close::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 2px;
+      background-color: #6b7280;
+      transform-origin: center;
+    }
+    .btn-close::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .btn-close::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
   </style>
 </head>
 <body>
-  <div class="page">
-    <h1>Intents 관리</h1>
-    <p class="subtitle">
-      게스트하우스 문자 자동응답에서 사용할 인텐트 목록을 관리합니다.
-      <br/>이 페이지에서 추가·수정한 값은 LLM 분류 프롬프트와 서버 로직에 그대로 반영될 수 있어요.
-    </p>
-
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Supabase 설정</div>
-        <span class="badge">클라이언트 측 anon 키 사용</span>
-      </div>
-      <div style="font-size:0.8rem;color:#4b5563;line-height:1.4;">
-        아래 상수 <span class="mono">SUPABASE_URL</span> / <span class="mono">SUPABASE_ANON_KEY</span> 를
-        네 프로젝트 값으로 교체한 뒤 사용하세요.
-      </div>
+  <!-- 상단 네비게이션 -->
+  <nav class="top-nav">
+    <div class="nav-brand">SMS 자동응답 대쉬보드</div>
+    <div class="nav-right">
+      <button id="btnReloadConfig" class="btn btn-outline">서버 설정 리로드</button>
+      <span id="healthStatus" class="small-text">서버 상태: 확인 중...</span>
     </div>
+  </nav>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Intent 추가 / 수정</div>
-        <span id="edit-mode-pill" class="pill" style="display:none;">편집 모드</span>
-      </div>
-      <form id="intent-form">
-        <div>
-          <label for="name">이름 (영문, 고유)</label>
-          <input type="text" id="name" placeholder="예: CHECKIN_TIME" required />
-        </div>
-        <div>
-          <label for="description">설명 (한국어)</label>
-          <textarea id="description" placeholder="예: 체크인/체크아웃 시간에 대한 문의"></textarea>
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="is_action" />
-          <label for="is_action" style="margin:0;">야간에 처리 보류 대상 (예약/취소/변경 등)</label>
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" id="is_complaint_like" />
-          <label for="is_complaint_like" style="margin:0;">기본적으로 민감/클레임 성격 (환불 등)</label>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn-primary" id="submit-btn">
-            + 인텐트 저장
-          </button>
-          <button type="button" class="btn-secondary" id="cancel-edit-btn" style="display:none;">
-            취소
-          </button>
-          <div class="status" id="form-status"></div>
-        </div>
-      </form>
-    </div>
+  <div class="page-container">
+    <!-- 탭 네비게이션 -->
+    <ul class="tab-nav" id="adminTab">
+      <li>
+        <button class="tab-button active" data-tab-target="#intents-pane">
+          카테고리 & 템플릿
+        </button>
+      </li>
+      <li>
+        <button class="tab-button" data-tab-target="#kb-pane">
+          Knowledge Base
+        </button>
+      </li>
+      <li>
+        <button class="tab-button" data-tab-target="#followup-pane">
+          직접 응대 필요
+        </button>
+      </li>
+    </ul>
 
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Intents 목록</div>
-        <button type="button" class="btn-secondary" id="reload-btn">새로고침</button>
+    <div class="tab-content">
+      <!-- Intent 모달 -->
+      <div class="modal-backdrop" id="intentModalBackdrop" aria-hidden="true">
+        <div class="modal" id="intentModal">
+          <div class="modal-header">
+            <h5 class="modal-title" id="intentModalTitle">Intent 추가</h5>
+            <button type="button" class="btn-close" data-modal-close></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2">
+              <label class="form-label">대분류 카테고리 (영문)</label>
+              <input class="modal-input" id="intentNameField" placeholder="ex. CHECKIN, ROOM, LOCATION 등"/>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">설명</label>
+              <input class="modal-input" id="intentDescField" placeholder="ex. 체크인 안내, 객실 안내 등"/>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="intentActionField" />
+              <label class="form-check-label" for="intentActionField">
+                발송 제외 옵션1. 야간(03시~10시)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="intentComplaintField" />
+              <label class="form-check-label" for="intentComplaintField">
+                발송 제외 옵션2. 컴플레인, 환불
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn" data-modal-close>취소</button>
+            <button class="btn btn-primary" id="btnIntentModalSave">저장</button>
+          </div>
+        </div>
       </div>
-      <div class="status" id="list-status">로딩 중...</div>
-      <div style="overflow-x:auto;margin-top:8px;">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>이름</th>
-              <th>설명</th>
-              <th>플래그</th>
-              <th>액션</th>
-            </tr>
-          </thead>
-          <tbody id="intents-tbody">
-            <!-- 데이터 렌더 -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 
-  <!-- Supabase JS v2 CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <!-- Template(중분류) 모달 -->
+      <div class="modal-backdrop" id="templateModalBackdrop" aria-hidden="true">
+        <div class="modal modal-lg" id="templateModal">
+          <div class="modal-header">
+            <h5 class="modal-title" id="templateModalTitle">템플릿 추가</h5>
+            <button type="button" class="btn-close" data-modal-close></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label">대분류 Intent</label>
+                <select id="tmplIntentField">
+                  <!-- JS에서 intents로 채움 -->
+                </select>
+              </div>
+              <div class="form-col">
+                <label class="form-label">Sub key (중분류 키)</label>
+                <input type="text" id="tmplSubField" />
+                <div class="form-text">예: CHECKIN_TIME, LATE_CHECKOUT, PARTY_PEOPLE</div>
+              </div>
+              <div class="form-col">
+                <label class="form-label">화면 표시 이름 (Label)</label>
+                <input type="text" id="tmplLabelField" />
+                <div class="form-text">예: 체크인 시간, 레이트 체크아웃, 인원 등</div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">답변 메시지 (Msg)</label>
+              <textarea id="tmplMsgField" rows="4" class="form-control"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn" data-modal-close>취소</button>
+            <button class="btn btn-primary" id="btnTemplateModalSave">저장</button>
+          </div>
+        </div>
+      </div>
+      <!-- KB 모달 -->
+      <div class="modal-backdrop" id="kbModalBackdrop" aria-hidden="true">
+        <div class="modal" id="kbModal">
+          <div class="modal-header">
+            <h5 class="modal-title" id="kbModalTitle">규정 추가</h5>
+            <button type="button" class="btn-close" data-modal-close></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2">
+              <label class="form-label">카테고리 (규정 대분류 / 영어로)</label>
+              <input class="modal-input" id="kbCategoryField" placeholder="예: PARTY_PRICE, CHECKIN 등" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">설명</label>
+              <input class="modal-input" id="kbTitleField" placeholder="예: 체크인 시간 안내" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">내용</label>
+              <textarea id="kbContentField" rows="5" class="modal-input" placeholder="예: 체크인 시간 = 오후 5시"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn" data-modal-close>취소</button>
+            <button class="btn btn-primary" id="btnKBModalSave">저장</button>
+          </div>
+        </div>
+      </div>
+      <!-- Intents & Templates Tab -->
+      <div class="tab-pane active" id="intents-pane">
+        <div class="split-layout">
+          <!-- 카테고리 목록 카드 -->
+          <div class="split-left">
+            <div class="card-header">
+              <div class="card-title">카테고리 목록</div>
+              <button id="btnAddIntent" class="btn btn-primary" data-open-modal="intentModalBackdrop">
+                + 추가
+              </button>
+            </div>
+            <div class="card">
+              <div class="card-body no-padding">
+                <div class="table-wrapper">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>name</th>
+                        <th>설명</th>
+                        <th class="text-center">Action</th>
+                        <th class="text-center">Complaint</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody id="intentsTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 템플릿 목록 카드 -->
+          <div class="split-right">
+            <div class="card-header">
+              <div>
+                <span>템플릿</span>
+                <select id="templateIntentFilter" class="inline-select">
+                  <option value="">(전체)</option>
+                </select>
+              </div>
+              <button id="btnAddTemplate" class="btn btn-primary" data-open-modal="templateModalBackdrop">
+                + 추가
+              </button>
+            </div>
+            <div class="card">
+              <div class="card-body no-padding">
+                <div class="table-wrapper">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Intent</th>
+                        <th>Sub</th>
+                        <th>Label</th>
+                        <th>Msg</th>
+                        <th style="width: 120px; justify-content: center;"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="templatesTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KB Tab -->
+      <div class="tab-pane" id="kb-pane">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <span>Knowledge Base</span>
+              <select id="kbIntentFilter" class="inline-select"></select>
+            </div>
+            <button id="btnAddKB" class="btn btn-primary">+ 추가</button>
+          </div>
+          <div class="card-body">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Title</th>
+                    <th>Content</th>
+                    <th>Date</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="kbTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Followup Tab -->
+      <div class="tab-pane" id="followup-pane">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <span>목록</span>
+              <select id="followupStatusFilter" class="inline-select">
+                <option value="PENDING">PENDING</option>
+                <option value="ALL">전체</option>
+              </select>
+            </div>
+            <button id="btnReloadFollowup" class="btn">새로고침</button>
+          </div>
+          <div class="card-body">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>시간</th>
+                    <th>번호</th>
+                    <th>내용</th>
+                    <th>Intent</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>메모</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="followupTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- tab-content -->
+  </div> <!-- page-container -->
+
   <script>
-    // TODO: 여기를 네 Supabase 프로젝트 값으로 교체하세요.
-    const SUPABASE_URL = "https://ecscluxtejjwkuiyrbzn.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjc2NsdXh0ZWpqd2t1aXlyYnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODc4ODQsImV4cCI6MjA4MDI2Mzg4NH0.NNs2V1-GjL5fVaKjVNbI6eKCq8fk8-HrN57H_EIHgm4";
+    // ====== 환경 설정 ======
+    const API_BASE_URL = "http://localhost:4000";
+    let cachedIntents = [];        // 카테고리 목록 캐시
+    let editingIntentId = null;    // null이면 추가, 숫자면 수정
+    let editingTemplateId = null;  // null이면 추가, 숫자면 수정
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const tbody = document.getElementById("intents-tbody");
-    const listStatusEl = document.getElementById("list-status");
-    const formStatusEl = document.getElementById("form-status");
-    const formEl = document.getElementById("intent-form");
-    const reloadBtn = document.getElementById("reload-btn");
-    const submitBtn = document.getElementById("submit-btn");
-    const cancelEditBtn = document.getElementById("cancel-edit-btn");
-    const editModePill = document.getElementById("edit-mode-pill");
-
-    const nameInput = document.getElementById("name");
-    const descInput = document.getElementById("description");
-    const isActionInput = document.getElementById("is_action");
-    const isComplaintLikeInput = document.getElementById("is_complaint_like");
-
-    let editingId = null;
-
-    function setFormStatus(msg, isError = false) {
-      formStatusEl.textContent = msg || "";
-      formStatusEl.style.color = isError ? "#b91c1c" : "#6b7280";
+    // ====== 모달 헬퍼 (순수 JS) ======
+    function showModal(backdropId) {
+      const backdrop = document.getElementById(backdropId);
+      if (backdrop) backdrop.classList.add("show");
+    }
+    function hideModal(backdropId) {
+      const backdrop = document.getElementById(backdropId);
+      if (backdrop) backdrop.classList.remove("show");
     }
 
-    function setListStatus(msg, isError = false) {
-      listStatusEl.textContent = msg || "";
-      listStatusEl.style.color = isError ? "#b91c1c" : "#6b7280";
+    // ====== Fetch Helpers ======
+    async function apiGet(path) {
+      const res = await fetch(API_BASE_URL + path);
+      if (!res.ok) throw new Error("GET failed");
+      return res.json();
+    }
+    async function apiPost(path, body) {
+      const res = await fetch(API_BASE_URL + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("POST failed");
+      return res.json();
+    }
+    async function apiPut(path, body) {
+      const res = await fetch(API_BASE_URL + path, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("PUT failed");
+      return res.json();
+    }
+    async function apiPatch(path, body) {
+      const res = await fetch(API_BASE_URL + path, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("PATCH failed");
+      return res.json();
+    }
+    async function apiDelete(path) {
+      const res = await fetch(API_BASE_URL + path, { method: "DELETE" });
+      if (!res.ok) throw new Error("DELETE failed");
+      return res.json();
     }
 
-    function enterEditMode(intent) {
-      editingId = intent.id;
-      nameInput.value = intent.name;
-      descInput.value = intent.description || "";
-      isActionInput.checked = !!intent.is_action;
-      isComplaintLikeInput.checked = !!intent.is_complaint_like;
-
-      submitBtn.textContent = "✓ 인텐트 수정 저장";
-      cancelEditBtn.style.display = "inline-flex";
-      editModePill.style.display = "inline-flex";
-      setFormStatus("편집 모드: 저장하면 해당 인텐트가 수정됩니다.");
+    // ====== 공통: 서버 상태 ======
+    async function checkHealth() {
+      try {
+        const data = await apiGet("/health");
+        document.getElementById("healthStatus").textContent =
+          "서버 상태: " + data.status;
+      } catch (e) {
+        document.getElementById("healthStatus").textContent =
+          "서버 상태: ERROR";
+      }
     }
 
-    function resetForm() {
-      editingId = null;
-      formEl.reset();
-      submitBtn.textContent = "+ 인텐트 저장";
-      cancelEditBtn.style.display = "none";
-      editModePill.style.display = "none";
-      setFormStatus("");
+    async function reloadServerConfig() {
+      try {
+        await apiPost("/admin/reload-config", {});
+        alert("설정 리로드 완료");
+      } catch (e) {
+        alert("리로드 실패: " + e.message);
+      }
     }
 
+    // ====== 카테고리 섹션 ======
     async function loadIntents() {
-      setListStatus("로딩 중...");
+      const data = await apiGet("/admin/intents");
+      cachedIntents = data;
+
+      const tbody = document.getElementById("intentsTableBody");
+      const templateIntentFilter = document.getElementById("templateIntentFilter");
+      const kbIntentFilter = document.getElementById("kbIntentFilter");
+
       tbody.innerHTML = "";
-      const { data, error } = await supabase
-        .from("intents")
-        .select("*")
-        .order("id", { ascending: true });
-
-      if (error) {
-        console.error("loadIntents error:", error);
-        setListStatus("목록을 불러오지 못했습니다.");
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        setListStatus("등록된 인텐트가 없습니다. 위 폼에서 새로 추가하세요.");
-        return;
-      }
-
-      setListStatus(`총 ${data.length}개 인텐트`);
+      templateIntentFilter.innerHTML = '<option value="">(전체)</option>';
+      kbIntentFilter.innerHTML = '<option value="">(전체)</option>';
 
       data.forEach((intent) => {
         const tr = document.createElement("tr");
+        tr.dataset.id = intent.id;
 
-        const tdId = document.createElement("td");
-        tdId.textContent = intent.id;
-        tdId.className = "mono";
+        tr.innerHTML = `
+          <td class="ta-left">${intent.name}</td>
+          <td>${intent.description || ""}</td>
+          <td class="ta-center">${intent.is_action ? "✅" : ""}</td>
+          <td class="ta-center">${intent.is_complaint_like ? "✅" : ""}</td>
+          <td class="ta-end">
+            <button class="btn btn-secondary btn-space-right">편집</button>
+            <button class="btn btn-danger">삭제</button>
+          </td>
+        `;
 
-        const tdName = document.createElement("td");
-        tdName.innerHTML = `<span class="mono">${intent.name}</span>`;
+        const [btnEdit, btnDelete] = tr.querySelectorAll("button");
 
-        const tdDesc = document.createElement("td");
-        tdDesc.textContent = intent.description || "";
+        btnEdit.addEventListener("click", () => openIntentModal(intent));
 
-        const tdFlags = document.createElement("td");
-        const flags = [];
-        if (intent.is_action) {
-          const span = document.createElement("span");
-          span.className = "pill pill-amber";
-          span.textContent = "야간 처리 보류";
-          flags.push(span);
-        }
-        if (intent.is_complaint_like) {
-          const span = document.createElement("span");
-          span.className = "pill pill-red";
-          span.textContent = "민감/클레임 성격";
-          flags.push(span);
-        }
-        if (flags.length === 0) {
-          const span = document.createElement("span");
-          span.className = "pill";
-          span.textContent = "일반";
-          flags.push(span);
-        }
-        flags.forEach((el, idx) => {
-          if (idx > 0) tdFlags.appendChild(document.createTextNode(" "));
-          tdFlags.appendChild(el);
+        btnDelete.addEventListener("click", async () => {
+          if (!confirm(`카테고리 "${intent.name}" 를 삭제할까요?`)) return;
+          try {
+            await apiDelete(`/admin/intents/${intent.id}`);
+            await loadIntents();
+            await loadTemplates();
+          } catch (e) {
+            alert("삭제 실패: " + e.message);
+          }
         });
 
-        const tdActions = document.createElement("td");
-        const actionsDiv = document.createElement("div");
-        actionsDiv.className = "table-actions";
-
-        const editBtn = document.createElement("button");
-        editBtn.type = "button";
-        editBtn.className = "btn-secondary";
-        editBtn.textContent = "수정";
-        editBtn.onclick = () => enterEditMode(intent);
-
-        const delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "btn-danger";
-        delBtn.textContent = "삭제";
-        delBtn.onclick = async () => {
-          const ok = window.confirm(
-            `정말 삭제할까요?\n\n[${intent.name}] 인텐트를 제거합니다.`
-          );
-          if (!ok) return;
-          const { error: delError } = await supabase
-            .from("intents")
-            .delete()
-            .eq("id", intent.id);
-          if (delError) {
-            console.error("delete intent error:", delError);
-            alert("삭제 중 오류가 발생했습니다.");
-            return;
-          }
-          if (editingId === intent.id) {
-            resetForm();
-          }
-          await loadIntents();
-        };
-
-        actionsDiv.appendChild(editBtn);
-        actionsDiv.appendChild(delBtn);
-        tdActions.appendChild(actionsDiv);
-
-        tr.appendChild(tdId);
-        tr.appendChild(tdName);
-        tr.appendChild(tdDesc);
-        tr.appendChild(tdFlags);
-        tr.appendChild(tdActions);
-
         tbody.appendChild(tr);
+
+        // 템플릿 / KB 필터 옵션
+        const opt1 = document.createElement("option");
+        opt1.value = intent.name;
+        opt1.textContent = intent.name;
+        templateIntentFilter.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = intent.name;
+        opt2.textContent = intent.name;
+        kbIntentFilter.appendChild(opt2);
+      });
+
+      fillTemplateIntentSelect();
+    }
+
+    function fillTemplateIntentSelect() {
+      const select = document.getElementById("tmplIntentField");
+      if (!select) return;
+      select.innerHTML = "";
+      cachedIntents.forEach((intent) => {
+        const opt = document.createElement("option");
+        opt.value = intent.name;
+        opt.textContent = intent.name;
+        select.appendChild(opt);
       });
     }
 
-    formEl.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      setFormStatus("");
+    function openIntentModal(intent) {
+      const titleEl = document.getElementById("intentModalTitle");
+      const nameField = document.getElementById("intentNameField");
+      const descField = document.getElementById("intentDescField");
+      const actionField = document.getElementById("intentActionField");
+      const complaintField = document.getElementById("intentComplaintField");
 
-      const name = nameInput.value.trim();
-      const description = descInput.value.trim();
-      const is_action = isActionInput.checked;
-      const is_complaint_like = isComplaintLikeInput.checked;
+      if (intent) {
+        editingIntentId = intent.id;
+        titleEl.textContent = `Intent 수정: ${intent.name}`;
+        nameField.value = intent.name;
+        nameField.disabled = true;
+        descField.value = intent.description || "";
+        actionField.checked = !!intent.is_action;
+        complaintField.checked = !!intent.is_complaint_like;
+      } else {
+        editingIntentId = null;
+        titleEl.textContent = "Intent 추가";
+        nameField.value = "";
+        nameField.disabled = false;
+        descField.value = "";
+        actionField.checked = false;
+        complaintField.checked = false;
+      }
+
+      showModal("intentModalBackdrop");
+    }
+
+    async function saveIntentFromModal() {
+      const name = document.getElementById("intentNameField").value.trim();
+      const description = document.getElementById("intentDescField").value.trim();
+      const is_action = document.getElementById("intentActionField").checked;
+      const is_complaint_like =
+        document.getElementById("intentComplaintField").checked;
 
       if (!name) {
-        setFormStatus("이름은 필수입니다.", true);
+        alert("Intent name 은 필수입니다.");
         return;
       }
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = editingId ? "저장 중..." : "추가 중...";
-
       try {
-        if (editingId) {
-          // UPDATE
-          const { error } = await supabase
-            .from("intents")
-            .update({
-              name,
-              description,
-              is_action,
-              is_complaint_like,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", editingId);
-
-          if (error) {
-            console.error("update error:", error);
-            setFormStatus("수정 중 오류가 발생했습니다.", true);
-          } else {
-            setFormStatus("수정 완료!");
-            resetForm();
-            await loadIntents();
-          }
-        } else {
-          // INSERT
-          const { error } = await supabase.from("intents").insert({
+        if (editingIntentId == null) {
+          await apiPost("/admin/intents", {
             name,
             description,
             is_action,
             is_complaint_like,
           });
-
-          if (error) {
-            console.error("insert error:", error);
-            setFormStatus("추가 중 오류가 발생했습니다. name이 중복되지 않는지 확인하세요.", true);
-          } else {
-            setFormStatus("추가 완료!");
-            formEl.reset();
-            await loadIntents();
-          }
+        } else {
+          await apiPut(`/admin/intents/${editingIntentId}`, {
+            description,
+            is_action,
+            is_complaint_like,
+          });
         }
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = editingId ? "✓ 인텐트 수정 저장" : "+ 인텐트 저장";
+
+        hideModal("intentModalBackdrop");
+        await loadIntents();
+        await loadTemplates();
+      } catch (e) {
+        alert("Intent 저장 실패: " + e.message);
       }
-    });
+    }
 
-    cancelEditBtn.addEventListener("click", () => {
-      resetForm();
-    });
+    async function addIntent() {
+      openIntentModal(null);
+    }
 
-    reloadBtn.addEventListener("click", () => {
-      loadIntents();
-    });
+    // ====== 템플릿 섹션 ======
+    async function loadTemplates() {
+      const intentFilter = document.getElementById("templateIntentFilter").value;
+      const qs = intentFilter ? `?intent=${encodeURIComponent(intentFilter)}` : "";
+      const data = await apiGet("/admin/templates" + qs);
 
-    // 초기 로딩
-    loadIntents();
+      const tbody = document.getElementById("templatesTableBody");
+      tbody.innerHTML = "";
+
+      data.forEach((t) => {
+        const tr = document.createElement("tr");
+        tr.dataset.id = t.id;
+
+        tr.innerHTML = `
+          <td>${t.intent_name}</td>
+          <td>${t.sub_intent}</td>
+          <td>${t.display_label || ""}</td>
+          <td class="text-small">${(t.message || "").replace(/\n/g, "<br>")}</td>
+          <td class="ta-right">
+            <button class="btn btn-secondary btn-space-right">편집</button>
+            <button class="btn btn-danger">삭제</button>
+          </td>
+        `;
+
+        const [btnEdit, btnDelete] = tr.querySelectorAll("button");
+
+        btnEdit.addEventListener("click", () => openTemplateModal(t));
+
+        btnDelete.addEventListener("click", async () => {
+          if (!confirm("이 템플릿을 삭제할까요?")) return;
+          try {
+            await apiDelete(`/admin/templates/${t.id}`);
+            await loadTemplates();
+          } catch (e) {
+            alert("삭제 실패: " + e.message);
+          }
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openTemplateModal(tmpl) {
+      const titleEl = document.getElementById("templateModalTitle");
+      const intentField = document.getElementById("tmplIntentField");
+      const subField = document.getElementById("tmplSubField");
+      const labelField = document.getElementById("tmplLabelField");
+      const msgField = document.getElementById("tmplMsgField");
+
+      fillTemplateIntentSelect();
+
+      if (tmpl) {
+        editingTemplateId = tmpl.id;
+        titleEl.textContent = `템플릿 수정 (#${tmpl.id})`;
+        intentField.value = tmpl.intent_name;
+        subField.value = tmpl.sub_intent;
+        labelField.value = tmpl.display_label || "";
+        msgField.value = tmpl.message || "";
+      } else {
+        editingTemplateId = null;
+        titleEl.textContent = "템플릿 추가";
+        if (cachedIntents.length > 0) {
+          intentField.value = cachedIntents[0].name;
+        }
+        subField.value = "";
+        labelField.value = "";
+        msgField.value = "";
+      }
+
+      showModal("templateModalBackdrop");
+    }
+
+    async function saveTemplateFromModal() {
+      const intent_name = document.getElementById("tmplIntentField").value.trim();
+      const sub_intent = document.getElementById("tmplSubField").value.trim();
+      const display_label =
+        document.getElementById("tmplLabelField").value.trim();
+      const message = document.getElementById("tmplMsgField").value.trim();
+
+      if (!intent_name) {
+        alert("대분류 Intent 를 선택하세요.");
+        return;
+      }
+      if (!sub_intent) {
+        alert("Sub key(중분류 키)를 입력하세요.");
+        return;
+      }
+
+      try {
+        if (editingTemplateId == null) {
+          await apiPost("/admin/templates", {
+            intent_name,
+            sub_intent,
+            display_label,
+            message,
+          });
+        } else {
+          await apiPut(`/admin/templates/${editingTemplateId}`, {
+            intent_name,
+            sub_intent,
+            display_label,
+            message,
+          });
+        }
+
+        hideModal("templateModalBackdrop");
+        await loadTemplates();
+      } catch (e) {
+        alert("템플릿 저장 실패: " + e.message);
+      }
+    }
+
+    async function addTemplate() {
+      openTemplateModal(null);
+    }
+
+    // ====== KB 섹션 ======
+    function openKBModal(kb) {
+      const titleEl = document.getElementById("kbModalTitle");
+      const catField = document.getElementById("kbCategoryField");
+      const titleField = document.getElementById("kbTitleField");
+      const contentField = document.getElementById("kbContentField");
+
+      if (kb) {
+        // (나중에 row 클릭해서 수정용으로도 쓸 수 있게 대비)
+        editingKBId = kb.id;
+        titleEl.textContent = `KB 수정 (#${kb.id})`;
+        catField.value = kb.category || "";
+        titleField.value = kb.title || "";
+        contentField.value = kb.content || "";
+      } else {
+        editingKBId = null;
+        titleEl.textContent = "KB 추가";
+        // 현재 KB 필터 선택값을 기본 category로 넣어주기
+        const currentFilter = document.getElementById("kbIntentFilter").value;
+        catField.value = currentFilter || "";
+        titleField.value = "";
+        contentField.value = "";
+      }
+
+      showModal("kbModalBackdrop");
+    }
+
+    async function saveKBFromModal() {
+      const category = document.getElementById("kbCategoryField").value.trim();
+      const title = document.getElementById("kbTitleField").value.trim();
+      const content = document.getElementById("kbContentField").value.trim();
+
+      if (!category) {
+        alert("Category 를 입력하세요 (보통 Intent name).");
+        return;
+      }
+      if (!title) {
+        alert("Title 을 입력하세요.");
+        return;
+      }
+
+      try {
+        if (editingKBId == null) {
+          // 추가
+          await apiPost("/admin/knowledge", { category, title, content });
+        } else {
+          // (원하면 나중에 수정도 모달에서 처리 가능)
+          await apiPut(`/admin/knowledge/${editingKBId}`, {
+            category,
+            title,
+            content,
+          });
+        }
+
+        hideModal("kbModalBackdrop");
+        await loadKB();
+      } catch (e) {
+        alert("KB 저장 실패: " + e.message);
+      }
+    }
+
+    async function loadKB() {
+      const filter = document.getElementById("kbIntentFilter").value;
+      const data = await apiGet(
+        "/admin/knowledge" + (filter ? `?intent=${filter}` : "")
+      );
+      const tbody = document.getElementById("kbTableBody");
+      tbody.innerHTML = "";
+
+      data.forEach((kb) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input class="modal-input" value="${kb.category}"></td>
+          <td><input class="modal-input" value="${kb.title}"></td>
+          <td><textarea class="textarea-sm" rows="1">${kb.content || ""}</textarea></td>
+          <td class="text-small text-muted">${kb.updated_at?.substring(0, 10)}</td>
+          <td class="ta-right">
+            <button class="btn btn-primary btn-space-right">저장</button>
+            <button class="btn btn-danger">삭제</button>
+          </td>
+        `;
+        const inputs = tr.querySelectorAll("input, textarea");
+        const btns = tr.querySelectorAll("button");
+        btns[0].onclick = async () => {
+          await apiPut(`/admin/knowledge/${kb.id}`, {
+            category: inputs[0].value,
+            title: inputs[1].value,
+            content: inputs[2].value,
+          });
+          alert("저장됨");
+        };
+        btns[1].onclick = async () => {
+          if (confirm("삭제?")) {
+            await apiDelete(`/admin/knowledge/${kb.id}`);
+            loadKB();
+          }
+        };
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function addKB() {
+      openKBModal(null);
+    }
+
+    // ====== Followup 섹션 ======
+    async function loadFollowups() {
+      const status = document.getElementById("followupStatusFilter").value;
+      const qs = status !== "ALL" ? "?status=PENDING" : "";
+      const data = await apiGet("/admin/followups" + qs);
+      const tbody = document.getElementById("followupTableBody");
+      tbody.innerHTML = "";
+
+      data.forEach((item) => {
+        const msg = item.message || {};
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="text-small text-muted">${msg.created_at
+            ?.substring(5, 16)
+            .replace("T", " ")}</td>
+          <td>${msg.phone_number}</td>
+          <td class="text-small">${msg.text}</td>
+          <td class="text-small">${msg.intent}</td>
+          <td><span class="chip chip-secondary">${item.reason}</span></td>
+          <td>
+            <span class="chip ${
+              item.status === "PENDING"
+                ? "chip-warning"
+                : "chip-success"
+            }">${item.status}</span>
+          </td>
+          <td><input class="modal-input" value="${item.memo || ""}"></td>
+          <td class="ta-right">
+            <button class="btn btn-primary btn-space-right">완료</button>
+            <button class="btn btn-secondary">메모</button>
+          </td>
+        `;
+        const memoIn = tr.querySelector("input");
+        const btns = tr.querySelectorAll("button");
+        btns[0].onclick = async () => {
+          if (confirm("완료 처리?")) {
+            await apiPatch(`/admin/followups/${item.id}`, {
+              status: "DONE",
+              memo: memoIn.value,
+              resolved: true,
+            });
+            loadFollowups();
+          }
+        };
+        btns[1].onclick = async () => {
+          await apiPatch(`/admin/followups/${item.id}`, {
+            memo: memoIn.value,
+          });
+          alert("메모 저장됨");
+        };
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ====== 초기 바인딩 ======
+    document.addEventListener("DOMContentLoaded", async () => {
+      document.querySelectorAll(".tab-button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-tab-target"); // 예: "#intents-pane"
+
+          // 모든 탭 버튼/콘텐츠 비활성화
+          document.querySelectorAll(".tab-button").forEach((b) => {
+            b.classList.remove("active");
+          });
+          document.querySelectorAll(".tab-pane").forEach((pane) => {
+            pane.classList.remove("active");
+          });
+
+          // 현재 버튼 + 타겟 pane만 활성화
+          btn.classList.add("active");
+          if (target) {
+            const pane = document.querySelector(target);
+            if (pane) pane.classList.add("active");
+          }
+        });
+      });
+      document
+        .getElementById("btnReloadConfig")
+        .addEventListener("click", reloadServerConfig);
+
+      document.getElementById("btnAddIntent").addEventListener("click", addIntent);
+      document
+        .getElementById("btnAddTemplate")
+        .addEventListener("click", addTemplate);
+      document.getElementById("btnAddKB").addEventListener("click", addKB);
+
+      document
+        .getElementById("btnIntentModalSave")
+        .addEventListener("click", saveIntentFromModal);
+      document
+        .getElementById("btnTemplateModalSave")
+        .addEventListener("click", saveTemplateFromModal);
+
+      document
+        .getElementById("btnKBModalSave")
+        .addEventListener("click", saveKBFromModal);
+
+      document
+        .getElementById("btnReloadFollowup")
+        .addEventListener("click", loadFollowups);
+      document
+        .getElementById("templateIntentFilter")
+        .addEventListener("change", loadTemplates);
+      document
+        .getElementById("kbIntentFilter")
+        .addEventListener("change", loadKB);
+      document
+        .getElementById("followupStatusFilter")
+        .addEventListener("change", loadFollowups);
+
+      // 모달 닫기 (배경 클릭 + X/취소 버튼)
+      document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop) {
+            backdrop.classList.remove("show");
+          }
+        });
+      });
+      document.querySelectorAll("[data-modal-close]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const backdrop = btn.closest(".modal-backdrop");
+          if (backdrop) backdrop.classList.remove("show");
+        });
+      });
+
+      // 초기 데이터 로딩
+      checkHealth();
+      await loadIntents();
+      await loadTemplates();
+      await loadKB();
+      await loadFollowups();
+    });
   </script>
+
 </body>
 </html>
